@@ -1,12 +1,14 @@
 import json
 import string
 import random
+from datetime import datetime
 from django.shortcuts import render
 from django.views import View
 from django.contrib.auth.models import User, auth
 from django.http import JsonResponse
+# from django.db.models import Dose
 
-from .models import Profile
+from .models import Profile, Task
 
 
 
@@ -126,3 +128,87 @@ class AuthorizationUser(View):
                 },
                 json_dumps_params={"ensure_ascii": False}
             )
+
+
+class TaskList(View):
+    def get(self, request, *args, **kwargs):
+        json_str = get_json(self)
+
+        token = self.request.META.get('HTTP_AUTHORIZATION')
+        
+        try:
+            user = User.objects.get(profile__token=token)
+            tasks = user.tasks.all()
+
+            tasks_data = []
+
+            for item in tasks:
+                tasks_data.append(
+                    {
+                        'uuidtask':item.uuidtask,
+                        'name':item.name
+                    }
+                )
+
+            data = {
+                'status': 'ok',
+                'description': '',
+                'total_tasks': tasks.count(),
+                'tasks': tasks_data,
+            }
+        except User.DoesNotExist:
+            data = {
+                'status': 'error',
+                'description': 'Пользователь не найден',
+                'total_tasks': 0,
+                'tasks': {}
+            }
+        except Exception as ex:
+            data = {
+                'status': 'error',
+                'description': f'Ошибка: {ex.__class__}',
+                'total_tasks': 0,
+                'tasks': {}
+            }
+    
+        return JsonResponse(
+            data,
+            json_dumps_params={"ensure_ascii": False}
+        )
+
+
+class TaskCreate(View):
+    def get(self, request, *args, **kwargs):
+        json_str = get_json(self)
+
+        token = self.request.META.get('HTTP_AUTHORIZATION')
+
+        try:
+            user = User.objects.get(profile__token=token)
+        except User.DoesNotExist:
+            data = {
+                'status': 'error',
+                'description': 'Пользователь не найден',
+                'total_tasks': 0,
+                'tasks': {}
+            }
+        
+        task = Task(
+            user=user,
+            name=json_str['task']['name'],
+            description=json_str['task']['name'],
+            timeplane=datetime.strptime(json_str['task']['timeplane'], '%Y-%m-%d'),
+            status=1
+        )
+        task.save()
+
+        data = {
+            'status': 'ok',
+            'description': 'Задание успешно сохранено.',
+            'uuid_tasks': task.uuidtask,
+        }
+
+        return JsonResponse(
+            data,
+            json_dumps_params={"ensure_ascii": False}
+        )
