@@ -237,7 +237,7 @@ class TaskCreate(View):
                 user=user,
                 name=json_str['task']['name'],
                 description=json_str['task']['description'],
-                timeplane=datetime.strptime(json_str['task']['timeplane'], '%Y-%m-%d'),
+                timeplane=datetime.strptime(json_str['task']['timeplane'], '%Y-%m-%d %H:%M'),
                 status=1
             )
             task.save()
@@ -283,7 +283,7 @@ class TaskInfo(View):
         }
 
         поле 'status' может принимать значения 'ok' или 'error'
-        
+
         поле 'tasks' будет включено в файл, если поле 'status' иммет значение 'ok'
     """
     def get(self, request, *args, **kwargs):
@@ -304,6 +304,69 @@ class TaskInfo(View):
                         'name': my_task.name,
                         'description': my_task.description,
                         'timecreate': my_task.timecreate,
+                        'status': my_task.status,
+                        'timeplane': my_task.timeplane
+                    }
+                }
+            else:
+                data = {
+                'status': 'error',
+                'description': f'Ошибка! Не допустимое значение action: {json_str["action"]}',
+            }
+        except User.DoesNotExist:
+            data = {
+                'status': 'error',
+                'description': 'Пользователь не найден',
+            }
+        except KeyError as ex:
+            data = {
+                'status': 'error',
+                'description': f'Ошибка: {ex.__class__}. Отсутствует поле {ex}',
+            }
+        except Exception as ex:
+            data = {
+                'status': 'error',
+                'description': f'Ошибка: {ex.__class__}.',
+            }
+        
+        return JsonResponse(
+            data,
+            json_dumps_params={"ensure_ascii": False}
+        )
+
+
+class TaskChange(View):
+    def get(self, request, *args, **kwargs):
+        json_str = get_json(self)
+
+        token = self.request.META.get('HTTP_AUTHORIZATION')
+
+        try:
+            user = User.objects.get(profile__token=token)
+
+            if json_str['action'] == 'change_task':
+                my_task = Task.objects.get(uuidtask=json_str['uuid_task'], user=user)
+
+                if 'name' in json_str['task']:
+                    my_task.name = json_str['task']['name']
+
+                if 'description' in json_str['task']:
+                    my_task.description = json_str['task']['description']
+
+                if 'status' in json_str['task']:
+                    my_task.status = json_str['task']['status']
+
+                if 'timeplane' in json_str['task']:
+                    my_task.timeplane = datetime.strptime(json_str['task']['timeplane'], '%Y-%m-%d %H:%M')
+                
+                my_task.save()
+
+                data = {
+                    'status': 'ok',
+                    'description': 'Задание успешно изменено.',
+                    'tasks': {
+                        'name': my_task.name,
+                        'description': my_task.description,
                         'status': my_task.status,
                         'timeplane': my_task.timeplane
                     }
