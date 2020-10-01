@@ -19,6 +19,9 @@ mono_crash.*
 # VS Code
 .vscode/
 
+# Migrations Django
+apiapp/migrations/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
