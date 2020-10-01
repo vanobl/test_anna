@@ -257,3 +257,79 @@ class TaskCreate(View):
             data,
             json_dumps_params={"ensure_ascii": False}
         )
+
+
+class TaskInfo(View):
+    """
+        Класс реализующий получение информации по конкретной задаче.
+
+        Запрос на сервер осуществляется по шаблону:
+        {
+            'action': 'info_task',
+            'uuid_task': 'b5c34b90-e1cc-48b2-96aa-7382dfc7491a'
+        }
+
+        Ответ сервера осуществляется по шаблону:
+         {
+            'status': 'ok',
+            'description': '',
+            'tasks': {
+                'name': '',
+                'description': '',
+                'timecreate': '',
+                'status': '',
+                'timeplane': ''
+            }
+        }
+
+        поле 'status' может принимать значения 'ok' или 'error'
+        
+        поле 'tasks' будет включено в файл, если поле 'status' иммет значение 'ok'
+    """
+    def get(self, request, *args, **kwargs):
+        json_str = get_json(self)
+
+        token = self.request.META.get('HTTP_AUTHORIZATION')
+
+        try:
+            user = User.objects.get(profile__token=token)
+
+            if json_str['action'] == 'info_task':
+                my_task = Task.objects.get(uuidtask=json_str['uuid_task'])
+
+                data = {
+                    'status': 'ok',
+                    'description': 'Задание успешно получено.',
+                    'tasks': {
+                        'name': my_task.name,
+                        'description': my_task.description,
+                        'timecreate': my_task.timecreate,
+                        'status': my_task.status,
+                        'timeplane': my_task.timeplane
+                    }
+                }
+            else:
+                data = {
+                'status': 'error',
+                'description': f'Ошибка! Не допустимое значение action: {json_str["action"]}',
+            }
+        except User.DoesNotExist:
+            data = {
+                'status': 'error',
+                'description': 'Пользователь не найден',
+            }
+        except KeyError as ex:
+            data = {
+                'status': 'error',
+                'description': f'Ошибка: {ex.__class__}. Отсутствует поле {ex}',
+            }
+        except Exception as ex:
+            data = {
+                'status': 'error',
+                'description': f'Ошибка: {ex.__class__}.',
+            }
+        
+        return JsonResponse(
+            data,
+            json_dumps_params={"ensure_ascii": False}
+        )

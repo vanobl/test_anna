@@ -10,4 +10,5 @@ urlpatterns = [
 
     path('get_task_list/', apiapp.TaskList.as_view(), name='get_task_list'),
     path('create_task/', apiapp.TaskCreate.as_view(), name='create_task'),
+    path('info_task/', apiapp.TaskInfo.as_view(), name='info_task'),
 ]
