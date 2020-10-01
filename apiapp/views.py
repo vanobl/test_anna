@@ -131,6 +131,24 @@ class AuthorizationUser(View):
 
 
 class TaskList(View):
+    """
+        Класс реализующий возврат пользователю списка его задач.
+
+        Запрос на сервер осуществляется по шаблону:
+        {
+            'action': 'get_tasks_list',
+            'filter_status': 'новая',
+            'timeplane': ''
+        }
+
+        Ответ сервера осуществляется по шаблону:
+        {
+            'status': 'ok',
+            'description': '',
+            'total_tasks': 0,
+            'tasks': [],
+        }
+    """
     def get(self, request, *args, **kwargs):
         json_str = get_json(self)
 
@@ -178,6 +196,27 @@ class TaskList(View):
 
 
 class TaskCreate(View):
+    """
+        Класс реализующий создание задачи.
+
+        Запрос на сервер осуществляется по шаблону:
+        {
+            'action': 'create_task',
+            'task': {
+                'name': 'пробная',
+                'description': '',
+                'timeplane': '2020-10-25',
+            }
+        }
+
+        Ответ сервера осуществляется по шаблону:
+        {
+            'status': 'error',
+            'description': '',
+            'total_tasks': 0,
+            'tasks': {}
+        }
+    """
     def get(self, request, *args, **kwargs):
         json_str = get_json(self)
 
@@ -193,20 +232,26 @@ class TaskCreate(View):
                 'tasks': {}
             }
         
-        task = Task(
-            user=user,
-            name=json_str['task']['name'],
-            description=json_str['task']['name'],
-            timeplane=datetime.strptime(json_str['task']['timeplane'], '%Y-%m-%d'),
-            status=1
-        )
-        task.save()
+        try:
+            task = Task(
+                user=user,
+                name=json_str['task']['name'],
+                description=json_str['task']['description'],
+                timeplane=datetime.strptime(json_str['task']['timeplane'], '%Y-%m-%d'),
+                status=1
+            )
+            task.save()
+            data = {
+                'status': 'ok',
+                'description': 'Задание успешно сохранено.',
+                'uuid_tasks': task.uuidtask,
+            }
+        except KeyError as ex:
+            data = {
+                'status': 'error',
+                'description': f'Ошибка: {ex.__class__}. Отсутствует поле {ex}',
+            }
 
-        data = {
-            'status': 'ok',
-            'description': 'Задание успешно сохранено.',
-            'uuid_tasks': task.uuidtask,
-        }
 
         return JsonResponse(
             data,
