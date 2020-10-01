@@ -20,7 +20,7 @@ mono_crash.*
 .vscode/
 
 # Migrations Django
-apiapp/migrations/
+**/migrations/*
 
 # Build results
 [Dd]ebug/
