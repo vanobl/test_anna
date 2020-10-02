@@ -52,16 +52,16 @@ my_data_change_task = {
     'action': 'change_task',
     'uuid_task': '68bbcac0-9f8a-489f-b0de-2f3a29887dcd',
     'task': {
-        # 'name': 'особая задача',
+        'name': 'особая задача',
         # 'description': 'Допустим, вы летите из Москвы во Владивосток, а затем обратно, при полном безветрии. Затем вы совершаете точно такой же перелёт, но на этот раз на протяжении всего перелёта дует постоянный западный ветер: в одну сторону попутный, в обратную — лобовой.',
         # 'timeplane': '2020-12-30 23:59',
-        'status': 4
+        # 'status': 4
     }
 }
 
-jdata = json.dumps(my_data_change_task)
+jdata = json.dumps(my_data_get_task_list)
 
-url = TASK_CHANGE
+url = TASK_LIST
 
 client = requests.session()
 # client.get(url)

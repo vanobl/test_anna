@@ -158,32 +158,38 @@ class TaskList(View):
         try:
             user = User.objects.get(profile__token=token)
 
-            if json_str['filter_timeplane_start'] and json_str['filter_timeplane_end']:
-                tasks = user.tasks.filter(status=json_str['filter_status']).filter(
-                    timeplane__range=(
-                        datetime.strptime(json_str['filter_timeplane_start'], '%Y-%m-%d'),
-                        datetime.strptime(json_str['filter_timeplane_end'], '%Y-%m-%d')
+            if json_str['action'] == 'get_tasks_list':
+                if json_str['filter_timeplane_start'] and json_str['filter_timeplane_end']:
+                    tasks = user.tasks.filter(status=json_str['filter_status']).filter(
+                        timeplane__range=(
+                            datetime.strptime(json_str['filter_timeplane_start'], '%Y-%m-%d'),
+                            datetime.strptime(json_str['filter_timeplane_end'], '%Y-%m-%d')
+                        )
                     )
-                )
+                else:
+                    tasks = user.tasks.filter(status=json_str['filter_status'])
+
+                tasks_data = []
+
+                for item in tasks:
+                    tasks_data.append(
+                        {
+                            'uuidtask':item.uuidtask,
+                            'name':item.name
+                        }
+                    )
+
+                data = {
+                    'status': 'ok',
+                    'description': '',
+                    'total_tasks': tasks.count(),
+                    'tasks': tasks_data,
+                }
             else:
-                tasks = user.tasks.filter(status=json_str['filter_status'])
-
-            tasks_data = []
-
-            for item in tasks:
-                tasks_data.append(
-                    {
-                        'uuidtask':item.uuidtask,
-                        'name':item.name
-                    }
-                )
-
-            data = {
-                'status': 'ok',
-                'description': '',
-                'total_tasks': tasks.count(),
-                'tasks': tasks_data,
-            }
+                data = {
+                'status': 'error',
+                'description': f'Ошибка! Не допустимое значение action: {json_str["action"]}',
+                }
         except User.DoesNotExist:
             data = {
                 'status': 'error',
@@ -235,21 +241,27 @@ class TaskCreate(View):
         try:
             user = User.objects.get(profile__token=token)
 
-            task = Task(
-                user=user,
-                name=json_str['task']['name'],
-                description=json_str['task']['description'],
-                timeplane=datetime.strptime(json_str['task']['timeplane'], '%Y-%m-%d %H:%M'),
-                status=1
-            )
-            task.save()
-            history_task = HistoryChangeTask(task=task, name=task.name, description=task.description, timeplane=task.timeplane, status=task.status)
-            history_task.save()
-            data = {
-                'status': 'ok',
-                'description': 'Задание успешно сохранено.',
-                'uuid_tasks': task.uuidtask,
-            }
+            if json_str['action'] == 'create_task':
+                task = Task(
+                    user=user,
+                    name=json_str['task']['name'],
+                    description=json_str['task']['description'],
+                    timeplane=datetime.strptime(json_str['task']['timeplane'], '%Y-%m-%d %H:%M'),
+                    status=1
+                )
+                task.save()
+                history_task = HistoryChangeTask(task=task, name=task.name, description=task.description, timeplane=task.timeplane, status=task.status)
+                history_task.save()
+                data = {
+                    'status': 'ok',
+                    'description': 'Задание успешно сохранено.',
+                    'uuid_tasks': task.uuidtask,
+                }
+            else:
+                data = {
+                'status': 'error',
+                'description': f'Ошибка! Не допустимое значение action: {json_str["action"]}',
+                }
         except User.DoesNotExist:
             data = {
                 'status': 'error',
@@ -420,7 +432,7 @@ class TaskChange(View):
                 data = {
                 'status': 'error',
                 'description': f'Ошибка! Не допустимое значение action: {json_str["action"]}',
-            }
+                }
         except User.DoesNotExist:
             data = {
                 'status': 'error',
