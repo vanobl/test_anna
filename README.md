@@ -31,7 +31,7 @@ TASK_INFO = 'http://127.0.0.1:8000/api/info_task/'
 TASK_CHANGE = 'http://127.0.0.1:8000/api/change_task/'
 ```
 
-Так же подготовлены данные для отправки на в проект в формате JSON:
+Так же подготовлены данные для отправки в проект в формате JSON:
 * my_data_registration
 * my_data_authenticate
 * my_data_get_task_list
