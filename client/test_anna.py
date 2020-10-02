@@ -2,7 +2,7 @@ import json
 import requests
 import urllib3
 
-TOKEN = 'TT1Z4nxAreglZaAFMTDiEiiqUCqViwu'
+TOKEN = 'EdGOVYp9Fcx8LVD4VtlxwbHAMAEnn4V'
 
 REGISTRATION = 'http://127.0.0.1:8000/api/registration/'
 AUTHORIZATION = 'http://127.0.0.1:8000/api/authorization/'
@@ -29,30 +29,31 @@ my_data_authenticate = {
 
 my_data_get_task_list = {
     'action': 'get_tasks_list',
-    'filter_status': 'новая',
-    'timeplane': ''
+    'filter_status': 1,
+    'filter_timeplane_start': '2020-10-16',
+    'filter_timeplane_end': '2020-10-26'
 }
 
 my_data_create_task = {
     'action': 'create_task',
     'task': {
-        'name': 'пробная',
-        'description': 'офигительное описание задачи',
-        'timeplane': '2020-10-25 18:50',
+        'name': 'третья',
+        'description': 'задача для проверки истории',
+        'timeplane': '2020-10-17 18:50',
     }
 }
 
 my_data_info_task = {
     'action': 'info_task',
-    'uuid_task': 'b5c34b90-e1cc-48b2-96aa-7382dfc7491a'
+    'uuid_task': '68bbcac0-9f8a-489f-b0de-2f3a29887dcd'
 }
 
 my_data_change_task = {
     'action': 'change_task',
-    'uuid_task': 'b5c34b90-e1cc-48b2-96aa-7382dfc7491a',
+    'uuid_task': '68bbcac0-9f8a-489f-b0de-2f3a29887dcd',
     'task': {
-        'name': 'особая задача',
-        'description': 'Допустим, вы летите из Москвы во Владивосток, а затем обратно, при полном безветрии. Затем вы совершаете точно такой же перелёт, но на этот раз на протяжении всего перелёта дует постоянный западный ветер: в одну сторону попутный, в обратную — лобовой.',
+        # 'name': 'особая задача',
+        # 'description': 'Допустим, вы летите из Москвы во Владивосток, а затем обратно, при полном безветрии. Затем вы совершаете точно такой же перелёт, но на этот раз на протяжении всего перелёта дует постоянный западный ветер: в одну сторону попутный, в обратную — лобовой.',
         # 'timeplane': '2020-12-30 23:59',
         'status': 4
     }

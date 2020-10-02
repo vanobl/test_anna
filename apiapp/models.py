@@ -35,6 +35,9 @@ class Task(models.Model):
 
 
 class HistoryChangeTask(models.Model):
+    """
+        Таблица для хранения истории создания и изменения задач
+    """
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='history')
     name = models.CharField(verbose_name='название', max_length=128, blank=False, null=False)
     description = models.TextField(verbose_name='описание')

@@ -8,7 +8,7 @@ from django.contrib.auth.models import User, auth
 from django.http import JsonResponse
 # from django.db.models import Dose
 
-from .models import Profile, Task
+from .models import Profile, Task, HistoryChangeTask
 
 
 
@@ -138,7 +138,8 @@ class TaskList(View):
         {
             'action': 'get_tasks_list',
             'filter_status': 'новая',
-            'timeplane': ''
+            'filter_timeplane_start': '',
+            'filter_timeplane_end': ''
         }
 
         Ответ сервера осуществляется по шаблону:
@@ -156,7 +157,16 @@ class TaskList(View):
         
         try:
             user = User.objects.get(profile__token=token)
-            tasks = user.tasks.all()
+
+            if json_str['filter_timeplane_start'] and json_str['filter_timeplane_end']:
+                tasks = user.tasks.filter(status=json_str['filter_status']).filter(
+                    timeplane__range=(
+                        datetime.strptime(json_str['filter_timeplane_start'], '%Y-%m-%d'),
+                        datetime.strptime(json_str['filter_timeplane_end'], '%Y-%m-%d')
+                    )
+                )
+            else:
+                tasks = user.tasks.filter(status=json_str['filter_status'])
 
             tasks_data = []
 
@@ -224,15 +234,7 @@ class TaskCreate(View):
 
         try:
             user = User.objects.get(profile__token=token)
-        except User.DoesNotExist:
-            data = {
-                'status': 'error',
-                'description': 'Пользователь не найден',
-                'total_tasks': 0,
-                'tasks': {}
-            }
-        
-        try:
+
             task = Task(
                 user=user,
                 name=json_str['task']['name'],
@@ -241,10 +243,19 @@ class TaskCreate(View):
                 status=1
             )
             task.save()
+            history_task = HistoryChangeTask(task=task, name=task.name, description=task.description, timeplane=task.timeplane, status=task.status)
+            history_task.save()
             data = {
                 'status': 'ok',
                 'description': 'Задание успешно сохранено.',
                 'uuid_tasks': task.uuidtask,
+            }
+        except User.DoesNotExist:
+            data = {
+                'status': 'error',
+                'description': 'Пользователь не найден',
+                'total_tasks': 0,
+                'tasks': {}
             }
         except KeyError as ex:
             data = {
@@ -266,7 +277,7 @@ class TaskInfo(View):
         Запрос на сервер осуществляется по шаблону:
         {
             'action': 'info_task',
-            'uuid_task': 'b5c34b90-e1cc-48b2-96aa-7382dfc7491a'
+            'uuid_task': ''
         }
 
         Ответ сервера осуществляется по шаблону:
@@ -336,6 +347,37 @@ class TaskInfo(View):
 
 
 class TaskChange(View):
+    """
+        Класс реализующий изменение данных задачи
+
+        Запрос на сервер осуществляется по шаблону:
+        {
+            'action': 'change_task',
+            'uuid_task': '',
+            'task': {
+                'name': '',
+                'description': '',
+                'timeplane': '2020-12-30 23:59',
+                'status': 4
+            }
+        }
+
+        Ответ сервера осуществляется по шаблону:
+        {
+            'status': 'ok',
+            'description': 'Задание успешно изменено.',
+            'tasks': {
+                'name': '',
+                'description': '',
+                'status': '',
+                'timeplane': ''
+            }
+        }
+
+        поле 'status' может принимать значения 'ok' или 'error'
+
+        поле 'tasks' включается в файл, если поле 'status' имеет значение 'ok'
+    """
     def get(self, request, *args, **kwargs):
         json_str = get_json(self)
 
@@ -361,6 +403,9 @@ class TaskChange(View):
                 
                 my_task.save()
 
+                history_task = HistoryChangeTask(task=my_task, name=my_task.name, description=my_task.description, timeplane=my_task.timeplane, status=my_task.status)
+                history_task.save()
+
                 data = {
                     'status': 'ok',
                     'description': 'Задание успешно изменено.',
@@ -380,6 +425,11 @@ class TaskChange(View):
             data = {
                 'status': 'error',
                 'description': 'Пользователь не найден',
+            }
+        except Task.DoesNotExist:
+            data = {
+                'status': 'error',
+                'description': 'Задача не найдена',
             }
         except KeyError as ex:
             data = {
